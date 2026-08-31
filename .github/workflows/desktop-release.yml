@@ -3,6 +3,7 @@ name: LOELSTI App Release
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags:
       - 'desktop-v*'
 
@@ -30,9 +31,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: apps/desktop
-          tagName: ${{ github.ref_name }}
-          releaseName: LOELSTI ${{ github.ref_name }}
-          releaseBody: LOELSTI App Release
+          tagName: desktop-${{ github.sha }}
+          releaseName: LOELSTI ${{ github.sha }}
+          releaseBody: LOELSTI Windows App Release
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: false
