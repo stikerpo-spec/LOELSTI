@@ -1,12 +1,14 @@
 {
   "name": "loelsti",
   "private": true,
-  "workspaces": ["apps/web", "apps/api"],
+  "workspaces": ["apps/web", "apps/api", "apps/desktop"],
   "scripts": {
     "dev": "npm run dev --workspace apps/api & npm run dev --workspace apps/web",
     "db:generate": "npm run db:generate --workspace apps/api",
     "db:migrate": "npm run db:migrate --workspace apps/api",
     "build": "npm run db:generate && npm run build --workspace apps/api && npm run build --workspace apps/web",
-    "typecheck": "npm run db:generate && npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/web"
+    "typecheck": "npm run db:generate && npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/web",
+    "desktop:dev": "npm run dev --workspace apps/desktop",
+    "desktop:build": "npm run build --workspace apps/desktop"
   }
 }
