@@ -3,9 +3,7 @@ datasource db { provider = "postgresql" url = env("DATABASE_URL") }
 
 enum Presence { ONLINE IDLE DND INVISIBLE OFFLINE }
 enum ChannelType { TEXT VOICE VIDEO FORUM ANNOUNCEMENT STAGE TICKET }
-
 enum MessageStatus { SENT DELETED }
-
 enum Permission { VIEW_SERVER MANAGE_SERVER MANAGE_CHANNELS MANAGE_ROLES MANAGE_MEMBERS MANAGE_INVITES VIEW_AUDIT SEND_MESSAGES MANAGE_MESSAGES ATTACH_FILES EMBED_LINKS ADD_REACTIONS CONNECT SPEAK VIDEO STREAM MUTE_MEMBERS DEAFEN_MEMBERS MOVE_MEMBERS MENTION_EVERYONE }
 
 model User {
@@ -23,6 +21,7 @@ model User {
   updatedAt DateTime @updatedAt
   sessions Session[]
   memberships ServerMember[]
+  ownedServers Server[] @relation("serverOwner")
   messages Message[]
   reactions MessageReaction[]
   sentFriendRequests FriendRequest[] @relation("sent")
@@ -36,13 +35,13 @@ model Session { id String @id @default(cuid()); userId String; tokenHash String 
 model FriendRequest { id String @id @default(cuid()); senderId String; receiverId String; createdAt DateTime @default(now()); sender User @relation("sent",fields:[senderId],references:[id],onDelete: Cascade); receiver User @relation("received",fields:[receiverId],references:[id],onDelete: Cascade); @@unique([senderId,receiverId]) }
 model Friendship { id String @id @default(cuid()); userAId String; userBId String; createdAt DateTime @default(now()); userA User @relation("a",fields:[userAId],references:[id],onDelete: Cascade); userB User @relation("b",fields:[userBId],references:[id],onDelete: Cascade); @@unique([userAId,userBId]) }
 model Block { id String @id @default(cuid()); fromUserId String; toUserId String; createdAt DateTime @default(now()); fromUser User @relation("from",fields:[fromUserId],references:[id],onDelete: Cascade); toUser User @relation("to",fields:[toUserId],references:[id],onDelete: Cascade); @@unique([fromUserId,toUserId]) }
-model Server { id String @id @default(cuid()); name String; iconUrl String?; bannerUrl String?; description String?; ownerId String; createdAt DateTime @default(now()); updatedAt DateTime @updatedAt; members ServerMember[]; roles Role[]; channels Channel[]; invites Invite[]; owner User @relation(fields:[ownerId],references:[id]); @@index([ownerId]) }
+model Server { id String @id @default(cuid()); name String; iconUrl String?; bannerUrl String?; description String?; ownerId String; createdAt DateTime @default(now()); updatedAt DateTime @updatedAt; members ServerMember[]; roles Role[]; channels Channel[]; invites Invite[]; owner User @relation("serverOwner",fields:[ownerId],references:[id]); @@index([ownerId]) }
 model ServerMember { id String @id @default(cuid()); serverId String; userId String; nickname String?; joinedAt DateTime @default(now()); server Server @relation(fields:[serverId],references:[id],onDelete: Cascade); user User @relation(fields:[userId],references:[id],onDelete: Cascade); roles MemberRole[]; @@unique([serverId,userId]); @@index([userId]) }
 model Role { id String @id @default(cuid()); serverId String; name String; color String?; position Int @default(0); mentionable Boolean @default(false); server Server @relation(fields:[serverId],references:[id],onDelete: Cascade); permissions RolePermission[]; members MemberRole[]; @@index([serverId,position]) }
 model RolePermission { id String @id @default(cuid()); roleId String; permission Permission; role Role @relation(fields:[roleId],references:[id],onDelete: Cascade); @@unique([roleId,permission]) }
 model MemberRole { id String @id @default(cuid()); memberId String; roleId String; member ServerMember @relation(fields:[memberId],references:[id],onDelete: Cascade); role Role @relation(fields:[roleId],references:[id],onDelete: Cascade); @@unique([memberId,roleId]) }
 model Category { id String @id @default(cuid()); serverId String; name String; position Int @default(0); server Server @relation(fields:[serverId],references:[id],onDelete: Cascade); channels Channel[]; @@index([serverId,position]) }
-model Channel { id String @id @default(cuid()); serverId String; categoryId String?; name String; topic String?; type ChannelType @default(TEXT); position Int @default(0); slowmodeSeconds Int @default(0); server Server @relation(fields:[serverId],references:[id],onDelete: Cascade); category Category? @relation(fields:[categoryId],references:[id],onDelete: SetNull); messages Message[]; @@index([serverId,position]) }
+model Channel { id String @id @default(cuid()); serverId String; categoryId String?; name String; topic String?; type ChannelType @default(TEXT); position Int @default(0); slowmodeSeconds Int @default(0); server Server @relation(fields:[serverId],references:[id],onDelete: Cascade); category Category? @relation(fields:[categoryId],references:[id],onDelete: SetNull); messages Message[]; @@index([serverId,position]); @@index([categoryId,position]) }
 model Message { id String @id @default(cuid()); channelId String; authorId String; content String; status MessageStatus @default(SENT); replyToId String?; createdAt DateTime @default(now()); updatedAt DateTime @updatedAt; channel Channel @relation(fields:[channelId],references:[id],onDelete: Cascade); author User @relation(fields:[authorId],references:[id]); replyTo Message? @relation("replies",fields:[replyToId],references:[id]); replies Message[] @relation("replies"); reactions MessageReaction[]; @@index([channelId,createdAt,id]); @@index([authorId,createdAt]) }
 model MessageReaction { id String @id @default(cuid()); messageId String; userId String; emoji String; createdAt DateTime @default(now()); message Message @relation(fields:[messageId],references:[id],onDelete: Cascade); user User @relation(fields:[userId],references:[id],onDelete: Cascade); @@unique([messageId,userId,emoji]) }
 model Invite { id String @id @default(cuid()); serverId String; code String @unique; maxUses Int?; uses Int @default(0); expiresAt DateTime?; createdAt DateTime @default(now()); server Server @relation(fields:[serverId],references:[id],onDelete: Cascade) }
