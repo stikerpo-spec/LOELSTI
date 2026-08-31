@@ -1,6 +1,6 @@
 # LOELSTI
 
-Eigenständige Echtzeit-Kommunikationsplattform. Diese Repository-Struktur bildet die produktionsfähige Grundlage für Web/PWA, API, Authentifizierung, persistente Daten und Realtime-Kommunikation.
+Eigenständige Echtzeit-Kommunikationsplattform. Diese Repository-Struktur bildet die produktionsfähige Grundlage für Web/PWA, API, Authentifizierung, persistente Daten und Realtime-Kommunikation. Die Web-App enthält ein installierbares PWA-Manifest, ein eigenes App-Icon und einen Offline-App-Shell-Service-Worker.
 
 ## Struktur
 - `apps/web` – React/TypeScript/Vite Frontend

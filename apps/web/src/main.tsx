@@ -77,7 +77,7 @@ function App({ initialUser }: { initialUser: User }) {
     s.on('FRIEND_REQUEST', () => loadFriends().catch(() => {}));
     s.on('FRIENDSHIP_CREATE', () => loadFriends().catch(() => {}));
     s.on('PRESENCE_UPDATE', ({ userId, presence }: { userId: string; presence: string }) => { setFriends(prev => ({ ...prev, friends: prev.friends.map(f => f.id === userId ? { ...f, presence } : f) })); });
-    setSocket(s); return () => s.disconnect();
+    setSocket(s); return () => { s.disconnect(); };
   }, [servers.length]);
   useEffect(() => { if (!channel || page !== 'home') return; api<{ messages: Message[] }>(`/api/v1/channels/${channel}/messages`).then(x => setMessages(x.messages)).catch(e => setError(e.message)); }, [channel, page]);
 
