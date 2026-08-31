@@ -1,0 +1,38 @@
+name: LOELSTI App Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'desktop-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: npm install
+      - name: Generate app icons
+        working-directory: apps/desktop
+        run: npm run tauri -- icon src-tauri/app-icon.svg
+      - name: Build and publish Windows installer
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: LOELSTI ${{ github.ref_name }}
+          releaseBody: LOELSTI App Release
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: false
