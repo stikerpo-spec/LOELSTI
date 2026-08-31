@@ -27,10 +27,16 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare single public download page
+        run: |
+          rm -rf public
+          mkdir -p public
+          cp index.html public/index.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: public
 
       - name: Deploy to Pages
         id: deployment
