@@ -4,7 +4,9 @@
   "workspaces": ["apps/web", "apps/api"],
   "scripts": {
     "dev": "npm run dev --workspace apps/api & npm run dev --workspace apps/web",
-    "build": "npm run build --workspace apps/api && npm run build --workspace apps/web",
-    "typecheck": "npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/web"
+    "db:generate": "npm run db:generate --workspace apps/api",
+    "db:migrate": "npm run db:migrate --workspace apps/api",
+    "build": "npm run db:generate && npm run build --workspace apps/api && npm run build --workspace apps/web",
+    "typecheck": "npm run db:generate && npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/web"
   }
 }
