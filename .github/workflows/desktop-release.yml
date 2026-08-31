@@ -26,44 +26,22 @@ jobs:
       - name: Generate app icons
         working-directory: apps/desktop
         run: npm run tauri -- icon src-tauri/app-icon.svg
-      - name: Build Windows NSIS installer
+      - name: Build Windows installer
         working-directory: apps/desktop
         run: npm run tauri -- build --bundles nsis
       - name: Locate Windows installer
         shell: pwsh
         run: |
           $exe = Get-ChildItem -Path apps/desktop/src-tauri/target/release/bundle/nsis -Filter *.exe -Recurse | Select-Object -First 1
-          if (-not $exe) { throw 'Windows NSIS installer not found.' }
+          if (-not $exe) { throw 'Windows installer not found.' }
           Copy-Item $exe.FullName LOELSTI-Windows.exe
-      - name: Upload Windows installer artifact
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: loelsti-windows
           path: LOELSTI-Windows.exe
           if-no-files-found: error
           retention-days: 1
-
-  publish-windows:
-    name: Publish Windows release
-    runs-on: ubuntu-latest
-    needs: windows
-    steps:
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: loelsti-windows
-          path: release-assets
-      - name: Create or update Windows release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: LOELSTI ${{ env.RELEASE_TAG }}
-          body: LOELSTI Windows Release
-          draft: false
-          prerelease: false
-          files: release-assets/LOELSTI-Windows.exe
-          fail_on_unmatched_files: true
-          token: ${{ secrets.GITHUB_TOKEN }}
 
   android:
     name: Build Android
@@ -78,8 +56,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v3
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
@@ -101,9 +78,9 @@ jobs:
         shell: bash
         run: |
           APK=$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -type f -name '*.apk' | head -n 1)
-          test -n "$APK"
+          if [ -z "$APK" ]; then echo 'Android APK not found.'; exit 1; fi
           cp "$APK" LOELSTI-Android.apk
-      - name: Upload Android APK artifact
+      - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
           name: loelsti-android
@@ -111,25 +88,86 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  publish-android:
-    name: Publish Android APK
-    runs-on: ubuntu-latest
-    needs: android
-    if: ${{ needs.android.result == 'success' }}
+  ios:
+    name: Build iOS
+    runs-on: macos-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Generate app icons
+        working-directory: apps/desktop
+        run: npx --yes @tauri-apps/cli@2.11.0 icon src-tauri/app-icon.svg
+      - name: Initialize iOS project
+        working-directory: apps/desktop
+        run: npx --yes @tauri-apps/cli@2.11.0 ios init --ci
+      - name: Build iOS IPA without signing
+        working-directory: apps/desktop
+        run: npx --yes @tauri-apps/cli@2.11.0 ios build --ci --no-sign
+      - name: Locate iOS IPA
+        shell: bash
+        run: |
+          IPA=$(find apps/desktop/src-tauri/gen/apple/build -type f -name '*.ipa' | head -n 1)
+          if [ -z "$IPA" ]; then echo 'iOS IPA not found.'; exit 1; fi
+          cp "$IPA" LOELSTI-iOS.ipa
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: loelsti-ios
+          path: LOELSTI-iOS.ipa
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish complete LOELSTI release
+    runs-on: ubuntu-latest
+    needs: [windows, android, ios]
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: loelsti-windows
+          path: release-assets
       - name: Download Android artifact
         uses: actions/download-artifact@v4
         with:
           name: loelsti-android
           path: release-assets
-      - name: Create Android-only release fallback
+      - name: Download iOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: loelsti-ios
+          path: release-assets
+      - name: Verify release files
+        shell: bash
+        run: |
+          test -s release-assets/LOELSTI-Windows.exe
+          test -s release-assets/LOELSTI-Android.apk
+          test -s release-assets/LOELSTI-iOS.ipa
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android-${{ env.RELEASE_TAG }}
-          name: LOELSTI Android ${{ env.RELEASE_TAG }}
-          body: LOELSTI Android Release
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: LOELSTI ${{ env.RELEASE_TAG }}
+          body: LOELSTI platform release with Windows, Android and iOS builds.
           draft: false
           prerelease: false
-          files: release-assets/LOELSTI-Android.apk
+          overwrite_files: true
+          files: |
+            release-assets/LOELSTI-Windows.exe
+            release-assets/LOELSTI-Android.apk
+            release-assets/LOELSTI-iOS.ipa
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify published assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name' | grep -Fx 'LOELSTI-Windows.exe'
+          gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name' | grep -Fx 'LOELSTI-Android.apk'
+          gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name' | grep -Fx 'LOELSTI-iOS.ipa'
