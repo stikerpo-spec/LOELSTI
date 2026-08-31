@@ -22,7 +22,7 @@ jobs:
         run: npm install
       - name: Generate app icons
         working-directory: apps/desktop
-        run: npm run tauri -- icon app-icon.svg
+        run: npm run tauri -- icon src-tauri/app-icon.svg
       - name: Build and publish Windows installer
         uses: tauri-apps/tauri-action@v1
         env:
@@ -52,7 +52,7 @@ jobs:
         run: npm install
       - name: Generate app icons
         working-directory: apps/desktop
-        run: npm run tauri -- icon app-icon.svg
+        run: npm run tauri -- icon src-tauri/app-icon.svg
       - name: Build and publish macOS installer
         uses: tauri-apps/tauri-action@v1
         env:
@@ -81,7 +81,7 @@ jobs:
         run: npm install
       - name: Generate app icons
         working-directory: apps/desktop
-        run: npm run tauri -- icon app-icon.svg
+        run: npm run tauri -- icon src-tauri/app-icon.svg
       - name: Build and publish Linux packages
         uses: tauri-apps/tauri-action@v1
         env:
