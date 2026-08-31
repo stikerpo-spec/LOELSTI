@@ -1,0 +1,96 @@
+name: LOELSTI Desktop Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'desktop-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: npm install
+      - name: Generate app icons
+        working-directory: apps/desktop
+        run: npm run tauri -- icon app-icon.svg
+      - name: Build and publish Windows installer
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: LOELSTI ${{ github.ref_name }}
+          releaseBody: |
+            LOELSTI Desktop Release
+
+            Installiere LOELSTI als echte Desktop-App. Die Anwendung läuft in einem eigenen Fenster und nutzt die konfigurierte LOELSTI-API für Konten, Nachrichten und Realtime.
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: false
+
+  macos:
+    needs: windows
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: npm install
+      - name: Generate app icons
+        working-directory: apps/desktop
+        run: npm run tauri -- icon app-icon.svg
+      - name: Build and publish macOS installer
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: LOELSTI ${{ github.ref_name }}
+          releaseBody: LOELSTI Desktop Release
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: false
+
+  linux:
+    needs: macos
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Install dependencies
+        run: npm install
+      - name: Generate app icons
+        working-directory: apps/desktop
+        run: npm run tauri -- icon app-icon.svg
+      - name: Build and publish Linux packages
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: LOELSTI ${{ github.ref_name }}
+          releaseBody: LOELSTI Desktop Release
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: false
