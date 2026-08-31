@@ -1,54 +1,72 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#090b12">
-<title>LOELSTI</title>
-<style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:#090b12;color:#fff}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 0,#27335d 0,#111625 28%,#090b12 70%)}
-body{min-height:100vh;display:grid;place-items:center;padding:24px}
-main{width:min(900px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-a{min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;border:1px solid #2d3447;border-radius:24px;background:#121726e8;color:#fff;text-decoration:none;font-size:22px;font-weight:900;letter-spacing:-.02em;box-shadow:0 22px 70px #0008;transition:transform .16s ease,border-color .16s ease,background .16s ease}
-a:hover{transform:translateY(-4px);border-color:#6470a0;background:#171d2d}
-a:focus-visible{outline:3px solid #8f9cff;outline-offset:4px}
-a[aria-disabled="true"]{opacity:.45;pointer-events:none}
-@media(max-width:760px){main{grid-template-columns:1fr}a{min-height:130px}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b12">
+  <title>LOELSTI Downloads</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;background:#080b12}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 0,#293768 0,#11182a 34%,#080b12 72%)}
+    body{min-height:100vh;display:grid;place-items:center;padding:28px}
+    main{width:min(980px,100%);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+    .download{min-height:230px;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#fff;font-size:24px;font-weight:900;letter-spacing:-.03em;border:1px solid #313b58;border-radius:26px;background:rgba(18,24,40,.9);box-shadow:0 25px 80px rgba(0,0,0,.35);transition:transform .16s ease,border-color .16s ease,background .16s ease}
+    .download:hover{transform:translateY(-4px);border-color:#7182bb;background:#192239}
+    .download:focus-visible{outline:3px solid #a9b8ff;outline-offset:4px}
+    .download.loading{opacity:.65;cursor:wait}
+    .download.disabled{opacity:.45;pointer-events:none}
+    @media(max-width:760px){main{grid-template-columns:1fr}.download{min-height:130px}}
+  </style>
 </head>
 <body>
-<main aria-label="LOELSTI Downloads">
-<a id="windows" href="#">Download Windows</a>
-<a id="ios" href="#">Download iOS</a>
-<a id="android" href="#">Download Android</a>
-</main>
-<script>
-(async()=>{
- const repo='stikerpo-spec/LOELSTI';
- const api='https://api.github.com/repos/'+repo+'/releases/latest';
- const buttons={
-  windows:document.getElementById('windows'),
-  ios:document.getElementById('ios'),
-  android:document.getElementById('android')
- };
- const asset=(assets,re)=>assets.find(a=>re.test(String(a.name||'').toLowerCase()));
- try{
-  const response=await fetch(api,{headers:{Accept:'application/vnd.github+json'}});
-  if(!response.ok) throw new Error('no release');
-  const release=await response.json();
-  const assets=Array.isArray(release.assets)?release.assets:[];
-  const windows=asset(assets,/\.(exe|msi)$/);
-  const android=asset(assets,/\.apk$/);
-  const ios=asset(assets,/\.ipa$/);
-  if(windows) buttons.windows.href=windows.browser_download_url; else buttons.windows.setAttribute('aria-disabled','true');
-  if(android) buttons.android.href=android.browser_download_url; else buttons.android.setAttribute('aria-disabled','true');
-  if(ios) buttons.ios.href=ios.browser_download_url; else buttons.ios.setAttribute('aria-disabled','true');
- }catch{
-  Object.values(buttons).forEach(button=>button.setAttribute('aria-disabled','true'));
- }
-})();
-</script>
+  <main aria-label="LOELSTI Downloads">
+    <a class="download loading" id="windows" href="#">Download Windows</a>
+    <a class="download loading" id="ios" href="#">Download iOS</a>
+    <a class="download loading" id="android" href="#">Download Android</a>
+  </main>
+  <script>
+    (() => {
+      const repo = 'stikerpo-spec/LOELSTI';
+      const api = `https://api.github.com/repos/${repo}/releases/latest`;
+      const buttons = {
+        windows: document.getElementById('windows'),
+        ios: document.getElementById('ios'),
+        android: document.getElementById('android')
+      };
+
+      const setLink = (element, url) => {
+        element.classList.remove('loading');
+        if (url) {
+          element.href = url;
+          element.removeAttribute('aria-disabled');
+        } else {
+          element.classList.add('disabled');
+          element.setAttribute('aria-disabled', 'true');
+        }
+      };
+
+      fetch(api, { headers: { Accept: 'application/vnd.github+json' } })
+        .then(response => {
+          if (!response.ok) throw new Error('release-unavailable');
+          return response.json();
+        })
+        .then(release => {
+          const assets = Array.isArray(release.assets) ? release.assets : [];
+          const find = regex => assets.find(asset => regex.test(String(asset.name || '').toLowerCase()));
+
+          const windows = find(/\.(exe|msi)$/);
+          const android = find(/\.apk$/);
+          const ios = find(/\.ipa$/);
+
+          setLink(buttons.windows, windows?.browser_download_url || null);
+          setLink(buttons.android, android?.browser_download_url || null);
+          setLink(buttons.ios, ios?.browser_download_url || null);
+        })
+        .catch(() => {
+          Object.values(buttons).forEach(button => setLink(button, null));
+        });
+    })();
+  </script>
 </body>
 </html>
