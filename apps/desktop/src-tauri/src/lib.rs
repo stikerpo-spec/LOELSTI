@@ -2,6 +2,9 @@
 
 use std::{fs, process::Command};
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -34,8 +37,10 @@ fn install_update_from_url(app: tauri::AppHandle, url: String) -> Result<String,
     let path = std::env::temp_dir().join("LOELSTI-Update.exe");
     fs::write(&path, &bytes)
         .map_err(|e| format!("Update konnte nicht gespeichert werden: {e}"))?;
-    Command::new(&path)
-        .spawn()
+    let mut command = Command::new(&path);
+    #[cfg(target_os = "windows")]
+    command.creation_flags(0x08000000);
+    command.spawn()
         .map_err(|e| format!("LOELSTI-Installer konnte nicht gestartet werden: {e}"))?;
     app.exit(0);
     Ok(path.to_string_lossy().into_owned())
