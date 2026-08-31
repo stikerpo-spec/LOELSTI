@@ -62,8 +62,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+      - name: Install Android build tools
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973"
       - name: Install dependencies
         run: npm install
+      - name: Generate app icons
+        working-directory: apps/desktop
+        run: npm run tauri -- icon src-tauri/app-icon.svg
       - name: Initialize Android project
         working-directory: apps/desktop
         run: npm run tauri -- android init --ci
