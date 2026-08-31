@@ -1,0 +1,17 @@
+[package]
+name = "loelsti"
+version = "0.2.0"
+description = "LOELSTI Desktop"
+authors = ["LOELSTI"]
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "loelsti_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = "2"
+
+[dependencies]
+tauri = { version = "2", features = [] }
