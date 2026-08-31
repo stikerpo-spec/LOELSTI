@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "LOELSTI",
+  "version": "0.2.0",
+  "identifier": "de.loelsti.app",
+  "build": {
+    "beforeDevCommand": "npm --prefix ../web run dev",
+    "beforeBuildCommand": "npm --prefix ../web run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../web/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "LOELSTI",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "category": "SocialNetworking",
+    "shortDescription": "LOELSTI",
+    "longDescription": "LOELSTI als eigenständige Desktop-App.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "languages": ["German", "English"]
+      }
+    }
+  }
+}
