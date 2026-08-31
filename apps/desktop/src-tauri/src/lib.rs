@@ -16,7 +16,7 @@ fn app_version(app: tauri::AppHandle) -> String {
 }
 
 #[tauri::command]
-fn install_update_from_url(url: String) -> Result<String, String> {
+fn install_update_from_url(app: tauri::AppHandle, url: String) -> Result<String, String> {
     if !cfg!(target_os = "windows") {
         return Err("Der automatische Installer ist derzeit für Windows verfügbar.".to_string());
     }
@@ -37,5 +37,6 @@ fn install_update_from_url(url: String) -> Result<String, String> {
     Command::new(&path)
         .spawn()
         .map_err(|e| format!("LOELSTI-Installer konnte nicht gestartet werden: {e}"))?;
+    app.exit(0);
     Ok(path.to_string_lossy().into_owned())
 }
