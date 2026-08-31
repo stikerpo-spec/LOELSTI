@@ -47,6 +47,28 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  publish-windows:
+    name: Publish Windows release
+    runs-on: ubuntu-latest
+    needs: windows
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: loelsti-windows
+          path: release-assets
+      - name: Create release with Windows installer
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: LOELSTI ${{ env.RELEASE_TAG }}
+          body: LOELSTI Windows Release
+          draft: false
+          prerelease: false
+          files: release-assets/LOELSTI-Windows.exe
+          fail_on_unmatched_files: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   android:
     name: Build Android
     runs-on: ubuntu-latest
@@ -93,31 +115,21 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  release:
-    name: Publish release
+  publish-android:
+    name: Publish Android APK
     runs-on: ubuntu-latest
-    needs: [windows, android]
+    needs: [android, publish-windows]
+    if: ${{ needs.android.result == 'success' }}
     steps:
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: loelsti-windows
-          path: release-assets
       - name: Download Android artifact
         uses: actions/download-artifact@v4
         with:
           name: loelsti-android
           path: release-assets
-      - name: Create GitHub release with stable asset names
+      - name: Upload Android APK to existing release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: LOELSTI ${{ env.RELEASE_TAG }}
-          body: LOELSTI App Release
-          draft: false
-          prerelease: false
-          files: |
-            release-assets/LOELSTI-Windows.exe
-            release-assets/LOELSTI-Android.apk
+          files: release-assets/LOELSTI-Android.apk
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
