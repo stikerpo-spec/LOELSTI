@@ -202,6 +202,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          for asset in LOELSTI-Windows.exe LOELSTI-Android.apk LOELSTI-iOS.ipa; do
-            gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name' | grep -Fx "$asset"
-          done
+          response=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/stikerpo-spec/LOELSTI/releases/tags/${RELEASE_TAG}")
+          printf '%s' "$response" | jq -e '[.assets[].name] | index("LOELSTI-Windows.exe") != null' >/dev/null
+          printf '%s' "$response" | jq -e '[.assets[].name] | index("LOELSTI-Android.apk") != null' >/dev/null
+          printf '%s' "$response" | jq -e '[.assets[].name] | index("LOELSTI-iOS.ipa") != null' >/dev/null
