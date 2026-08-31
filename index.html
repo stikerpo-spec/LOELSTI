@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090b12">
+<title>LOELSTI</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:#090b12;color:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 0,#27335d 0,#111625 28%,#090b12 70%)}
+body{min-height:100vh;display:grid;place-items:center;padding:24px}
+main{width:min(900px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+a{min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;border:1px solid #2d3447;border-radius:24px;background:#121726e8;color:#fff;text-decoration:none;font-size:22px;font-weight:900;letter-spacing:-.02em;box-shadow:0 22px 70px #0008;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+a:hover{transform:translateY(-4px);border-color:#6470a0;background:#171d2d}
+a:focus-visible{outline:3px solid #8f9cff;outline-offset:4px}
+a[aria-disabled="true"]{opacity:.45;pointer-events:none}
+@media(max-width:760px){main{grid-template-columns:1fr}a{min-height:130px}}
+</style>
+</head>
+<body>
+<main aria-label="LOELSTI Downloads">
+<a id="windows" href="#">Download Windows</a>
+<a id="ios" href="#">Download iOS</a>
+<a id="android" href="#">Download Android</a>
+</main>
+<script>
+(async()=>{
+ const repo='stikerpo-spec/LOELSTI';
+ const api='https://api.github.com/repos/'+repo+'/releases/latest';
+ const buttons={
+  windows:document.getElementById('windows'),
+  ios:document.getElementById('ios'),
+  android:document.getElementById('android')
+ };
+ const asset=(assets,re)=>assets.find(a=>re.test(String(a.name||'').toLowerCase()));
+ try{
+  const response=await fetch(api,{headers:{Accept:'application/vnd.github+json'}});
+  if(!response.ok) throw new Error('no release');
+  const release=await response.json();
+  const assets=Array.isArray(release.assets)?release.assets:[];
+  const windows=asset(assets,/\.(exe|msi)$/);
+  const android=asset(assets,/\.apk$/);
+  const ios=asset(assets,/\.ipa$/);
+  if(windows) buttons.windows.href=windows.browser_download_url; else buttons.windows.setAttribute('aria-disabled','true');
+  if(android) buttons.android.href=android.browser_download_url; else buttons.android.setAttribute('aria-disabled','true');
+  if(ios) buttons.ios.href=ios.browser_download_url; else buttons.ios.setAttribute('aria-disabled','true');
+ }catch{
+  Object.values(buttons).forEach(button=>button.setAttribute('aria-disabled','true'));
+ }
+})();
+</script>
+</body>
+</html>
