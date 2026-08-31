@@ -31,6 +31,13 @@
   "bundle": {
     "active": true,
     "targets": ["nsis", "msi", "dmg", "appimage", "deb"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
     "category": "SocialNetworking",
     "shortDescription": "Eigenständige Echtzeit-Kommunikationsplattform",
     "longDescription": "LOELSTI ist eine eigenständige Kommunikations- und Community-Plattform als Desktop-Anwendung.",
